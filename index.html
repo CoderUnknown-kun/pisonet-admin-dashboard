@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Admins Portal</title>
+
+  <style>
+    
+    body.auth-loading #login-panel,
+    body.auth-loading #dashboard {
+      display: none !important;
+    }
+
+    body.auth-loading .topbar {
+      visibility: hidden;
+    }
+
+  #dashboard[hidden] {
+  display: none !important;
+    }
+    #login-panel[hidden] {
+      display: none !important;
+    }
+    #logout-btn {
+      display: none;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      min-height: 72px;   /* was fixed height */
+      padding-top: 6px;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+    }
+
+    .topbar-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.25px;
+      text-align: center;
+    }
+
+    .admin-email {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      opacity: 0.75;
+      text-align: center;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+
+    /* ===== TOPBAR CONTROLS: HARD POSITIONING ===== */
+    .topbar-controls {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .topbar-controls > * {
+      pointer-events: auto;
+}
+
+
+    .logout-btn {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      color: #555;
+      font-size: 13px;
+
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      opacity: 0.8;
+      transition: opacity .15s ease, transform .15s ease, color .15s ease;
+    }
+
+    .logout-btn:hover {
+      opacity: 1;
+      color: #111827;
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    body.dark .logout-btn:hover {
+      color: var(--text);
+    }
+
+
+    .logout-icon {
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.85;
+    }
+
+    
+    input#search:focus {
+      border-color: #bbb;
+    }
+    /* ===== Layout ===== */
+    .page {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    /* ===== Toasts ===== */
+    #toast-container {
+  position: fixed;
+  bottom: 16px;
+
+  left: 0;
+  right: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 12px;
+
+  z-index: 9999;
+  pointer-events: none;
+}
+
+#toast-container .toast {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+}
+
+  #toast-container .toast {
+    pointer-events: auto;
+  }
+
+    .toast {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  animation: toast-in .25s ease forwards;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  }
+
+  .toast.success { background: #2e7d32; }
+  .toast.error   { background: #c62828; }
+  .toast.info    { background: #1565c0; }
+  .toast.warn    { background: #92400e; }
+
+  @keyframes toast-in {
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .toast-icon.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+    /* ===== Buttons ===== */
+    button {
+      font-family: system-ui;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    /* === Command Button Motion Polish === */
+    button {
+      transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease,
+        color 0.15s ease;
+    }
+
+    button:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    }
+
+    button:not(:disabled):active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    }
+
+    /* Dark mode tuning */
+    body.dark button:not(:disabled):hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.55);
+    }
+
+    body.dark button:not(:disabled):active {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.65);
+    }
+
+
+    .action-btn, .forgot-btn {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .action-btn:hover, .forgot-btn:hover {
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+      animation: color_animate 1.5s infinite;
+    }
+    @keyframes color_animate {
+      0% { background-color: #ff9d00; }
+      50% { background-color: #ff6a00; }
+      100% { background-color: #ff8800; }
+    }
+
+    .ghost-btn {
+      background: transparent;
+      color: var(--text);
+    }
+
+    .ghost-btn:hover {
+      background: transparent;
+      color: var(--text);
+    }
+
+    /* ===== TOPBAR ICON FIXES ===== */
+.theme-toggle {
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: none !important;
+}
+
+.logout-btn {
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: none !important;
+}
+
+
+    /* Dark mode refinement */
+    body.dark button:not(:disabled):hover {
+      box-shadow: 0 10px 26px rgba(0,0,0,0.55);
+    }
+
+
+    /* ===== Status Pills ===== */
+    .status-bar {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 12px 0 20px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 999px;
+      font-weight: 600;
+      background: var(--card);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ===== Top Row (Status + Search) ===== */
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap; /* 👈 responsive */
+    }
+
+    .top-row > * {
+      flex-shrink: 0;
+    }
+
+
+   .search-input {
+      width: 220px;
+      max-width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #bbb;
+    }
+
+    .pc-name {
+      color: #222;
+    }
+
+    .pc-status {
+      text-transform: uppercase;
+    }
+    
+
+    hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 16px 0;
+    }
+
+   :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --card-elevated: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+
+    body.dark {
+      --bg: #0b1220;              /* deep navy */
+      --card: #0f172a;            /* base surface */
+      --card-elevated: #111c34;   /* slightly lifted */
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: rgba(255,255,255,0.06);
+    }
+
+
+    body {
+      font-family: system-ui;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .toast.danger {
+      background: #b91c1c;
+    }
+
+    .toast.confirm {
+      min-width: 280px;
+      animation: toast-in-wide .25s ease forwards;
+    }
+
+    @keyframes toast-in-wide {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .toast.warn {
+      background: #92400e; /* amber, not panic */
+    }
+
+    .toast.confirm-soft {
+      min-width: 260px;
+    }
+
+    .toast.confirm-inline.warn {
+      background: #fff8e1;
+      color: #7a5c00;
+    }
+
+    .toast.confirm-inline.danger {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    body.dark .pc-status {
+      font-weight: 600;
+    }
+
+    body.dark .pc-status[style*="green"] {
+      color: #86efac !important;
+    }
+
+    body.dark .pc-status[style*="red"] {
+      color: #fca5a5 !important;
+    }
+
+    body.dark .pc-status[style*="orange"] {
+      color: #fde68a !important;
+    }
+
+    .status-pill,
+    .search-input,
+    .toast,
+    button {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    body.dark .toast {
+      box-shadow: 0 8px 24px rgba(88, 88, 88, 0.578);
+    }
+
+    body.dark .toast.confirm-inline.warn {
+      background: #2a1f0a;
+      color: #fcd34d;
+    }
+
+    body.dark .toast.confirm-inline.danger {
+      background: #2a0f12;
+      color: #fca5a5;
+    }
+
+    @media (max-width: 520px) {
+  .pc-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+    }
+
+    /* ===== Theme Toggle Button ===== */
+    .theme-toggle {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;              /* 👈 bigger icon */
+      line-height: 1;
+      padding: 6px 8px;
+      opacity: 0.85;
+      transition:
+        opacity .15s ease,
+        transform .15s ease,
+        color .15s ease;
+    }
+
+    .theme-toggle:hover {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    /* Light mode (moon icon) */
+    body:not(.dark) .theme-toggle {
+      color: #374151; /* slate-700, clean not dirty */
+    }
+
+    /* Dark mode (sun icon) */
+    body.dark .theme-toggle {
+      color: #facc15; /* warm yellow, not mud */
+    }
+
+    /* ===== Login Page ===== */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 60px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--card-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px 22px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+}
+
+body.dark .login-card {
+  border: none;
+  background: #111827;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04),
+    0 20px 50px rgba(0,0,0,0.65);
+}
+
+.login-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.login-card input {
+  width: 100%;
+  padding: 9px 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+
+.login-card input:focus {
+  outline: none;
+  border-color: #bbb;
+}
+
+.login-card button {
+  display: block;
+  margin: auto;
+  width: 50%;
+  margin-top: 6px;
+}
+
+.login-card button.action-btn {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.login-card button.action-btn:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+body.dark .login-card button.action-btn:hover {
+  background: #1f2937;
+}
+
+.ghost-btn.theme-toggle, button.logout-btn {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  cursor: pointer;
+  position: absolute;
+}
+/* Prevent topbar buttons from jumping */
+.theme-toggle:hover,
+.logout-btn:hover {
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
+#audit-modal {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+#audit-modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#audit-modal > div {
+  transform: translateY(6px) scale(0.98);
+  transition: transform .18s ease;
+}
+
+#audit-modal.show > div {
+  transform: translateY(0) scale(1);
+}
+/* =====================================================
+   MOBILE OPTIMIZATION
+   ===================================================== */
+
+@media (max-width: 600px) {
+
+  .page {
+    margin: 14px auto;
+    padding: 0 10px;
+  }
+
+  .topbar-title {
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .admin-email {
+    font-size: 11px;
+  }
+
+  .logout-btn {
+    font-size: 11px;
+    right: 6px;
+  }
+
+  .theme-toggle {
+    left: 6px;
+  }
+
+  .status-bar,
+  #summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .status-pill {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .top-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .search-input {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  .login-card button {
+    width: 100%;
+  }
+
+  #pcs > div {
+    padding: 14px !important;
+  }
+
+  #pcs button {
+    flex: 1 1 45%;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  #pcs div[style*="display:flex"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  #audit-modal > div {
+    width: 95% !important;
+    padding: 14px !important;
+  }
+
+  #audit-content {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}
+
+/* =====================================================
+   MOBILE CONFIRM TOAST
+   ===================================================== */
+
+.toast.confirm-inline {
+  width: 100%;
+  max-width: 420px;
+}
+
+@media (max-width: 600px) {
+
+  .toast.confirm-inline {
+
+    width: 100%;
+    max-width: 420px;   /* ⭐ same as normal toast */
+    margin: 0 auto;
+
+    border-radius: 14px;
+    padding: 14px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    animation: slide-up .22s ease forwards;
+  }
+
+  .toast.confirm-inline div {
+    display: flex;
+    gap: 10px;
+  }
+
+  .toast.confirm-inline button {
+    flex: 1;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+}
+
+@keyframes slide-up {
+
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+}
+  </style>
+</head>
+
+<body class="auth-loading">
+
+<div class="topbar">
+  <div class="topbar-controls">
+    <button
+      id="theme-toggle"
+      class="ghost-btn theme-toggle"
+      onclick="toggleDarkMode()"
+      aria-label="Toggle theme"
+    >
+      🌙
+    </button>
+
+    <button id="logout-btn" class="logout-btn" onclick="logout()" hidden>
+      <span class="logout-icon" aria-hidden="true">⇥</span>
+      Logout
+    </button>
+  </div>
+
+  <div class="topbar-title">
+  Admins Portal
+  <div id="admin-email" class="admin-email"></div>
+</div>
+</div>
+
+<div id="login-panel" class="page login-page">
+  <div class="login-card">
+    <div class="login-title">Admin Sign In</div>
+
+    <input id="email" type="email" placeholder="Email">
+
+    <div id="reset-status" style="
+      font-size:12px;
+      margin-top:-6px;
+      margin-bottom:6px;
+      min-height:16px;
+      color:var(--muted);
+    "></div>
+    
+    <input id="password" type="password" placeholder="Password">
+    <div id="login-status" style="
+      font-size:12px;
+      margin-top:-6px;
+      margin-bottom:6px;
+      min-height:16px;
+      color:var(--muted);
+    "></div>
+    <button id="login-btn" class="action-btn" onclick="login()">Login</button>
+    <button id="forgot-btn" class="forgot-btn" onclick="resetPassword()">
+  Forgot password?
+</button>
+
+  </div>
+</div>
+
+<div id="dashboard" hidden class="page">
+  <hr>
+
+  <div class="top-row">
+  <div id="summary"></div>
+
+  <input
+    id="search"
+    class="search-input"
+    placeholder="Search PC…"
+  >
+</div>
+
+<div id="pcs"></div>
+
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ===== Audit Modal ===== -->
+<div id="audit-modal" hidden onclick="closeAuditModal()"
+  style="
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    z-index:10000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  ">
+  <div
+    style="
+      background:var(--card);
+      color:var(--text);
+      width:420px;
+      max-width:90%;
+      border-radius:8px;
+      padding:16px 18px;
+      box-shadow:0 8px 30px rgba(0,0,0,.3);
+      font-family:system-ui;
+    "
+    onclick="event.stopPropagation()"
+  >
+    <div id="modal-title"
+     style="font-weight:700;margin-bottom:8px;text-align:center;">
+    </div>
+
+    <div id="audit-content"
+         style="font-size:13px;line-height:1.45;color:var(--muted);"
+    </div>
+
+    <div style="text-align:right;margin-top:14px;">
+      <button onclick="closeAuditModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase v9 COMPAT -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+
+<script src="./firebase.js"></script>
+<script src="./app.js"></script>
+<script>
+  const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+
+emailInput.addEventListener("input", () => {
+  document.getElementById("reset-status").textContent = "";
+});
+
+passwordInput.addEventListener("input", () => {
+  document.getElementById("login-status").textContent = "";
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("email").focus();
+});
+
+[emailInput, passwordInput].forEach(input => {
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") login();
+  });
+});
+</script>
+</body>
+</html>
