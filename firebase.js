@@ -1,7 +1,7 @@
 if (!firebase.apps.length) {
 
   const app = firebase.initializeApp({
-  apiKey: "AIzaSyCjzXD3I5PM8kqssK2BEWExr74KeCn0qs4",
+  apiKey: "AIzaSyB05AGrf2zMzfpRlwyqeMCSvdvcQunJOSc",
   authDomain: "mlsn-industries.firebaseapp.com",
   projectId: "mlsn-industries",
   storageBucket: "mlsn-industries.firebasestorage.app",
@@ -22,4 +22,5 @@ if (!firebase.apps.length) {
   window.db   = app.firestore();
 
   console.log("✅ Firebase initialized with NEW App ID + App Check");
+
 }
