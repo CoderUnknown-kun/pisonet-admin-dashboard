@@ -1,4 +1,4 @@
-# Pisonet Admin Dashboard
+# Remote Admin Dashboard
 
 Web dashboard used to manage and monitor pisonet computers in real time.
 
